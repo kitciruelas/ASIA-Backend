@@ -268,3 +268,41 @@ exports.deleteInventory = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get inventory metrics
+exports.getInventoryMetrics = async (req, res, next) => {
+    try {
+        // Get total revenue and quantity from sales
+        const [salesMetrics] = await pool.query(`
+            SELECT 
+                SUM(total_amount) as total_revenue,
+                SUM(quantity) as total_quantity
+            FROM sales
+        `);
+
+        // Get trending product (product with most sales in last 30 days)
+        const [trendingProduct] = await pool.query(`
+            SELECT 
+                p.name,
+                p.product_id,
+                SUM(s.quantity) as total_sold
+            FROM sales s
+            JOIN products p ON s.product_id = p.product_id
+            WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY p.product_id, p.name
+            ORDER BY total_sold DESC
+            LIMIT 1
+        `);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalRevenue: salesMetrics[0].total_revenue || 0,
+                totalQuantity: salesMetrics[0].total_quantity || 0,
+                trendingProduct: trendingProduct[0]?.name || '-'
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};

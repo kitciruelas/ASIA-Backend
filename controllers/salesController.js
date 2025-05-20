@@ -338,3 +338,54 @@ exports.deleteSale = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get sales metrics
+exports.getSalesMetrics = async (req, res, next) => {
+    try {
+        const [metrics] = await pool.query(`
+            SELECT 
+                COUNT(*) as total_sales,
+                SUM(quantity) as total_units_sold,
+                SUM(total_amount) as total_revenue,
+                AVG(total_amount) as average_sale_value,
+                MAX(total_amount) as highest_sale,
+                MIN(total_amount) as lowest_sale
+            FROM sales
+        `);
+        
+        res.status(200).json({
+            success: true,
+            data: metrics[0]
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get trending products
+exports.getTrendingProducts = async (req, res, next) => {
+    try {
+        const [trending] = await pool.query(`
+            SELECT 
+                p.product_id,
+                p.name as product_name,
+                p.sku,
+                COUNT(s.sale_id) as sale_count,
+                SUM(s.quantity) as total_quantity_sold,
+                SUM(s.total_amount) as total_revenue
+            FROM sales s
+            JOIN products p ON s.product_id = p.product_id
+            WHERE s.sale_date >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+            GROUP BY p.product_id
+            ORDER BY total_quantity_sold DESC
+            LIMIT 10
+        `);
+        
+        res.status(200).json({
+            success: true,
+            data: trending
+        });
+    } catch (error) {
+        next(error);
+    }
+};

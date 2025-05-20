@@ -3,7 +3,11 @@ const pool = require('../config/conn');
 // Get all products
 exports.getAllProducts = async (req, res, next) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM products');
+        const [rows] = await pool.query(`
+            SELECT p.*, COALESCE(i.quantity, 0) as quantity
+            FROM products p
+            LEFT JOIN inventory i ON p.product_id = i.product_id
+        `);
         res.status(200).json({
             success: true,
             message: 'Products retrieved successfully',

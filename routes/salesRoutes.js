@@ -17,6 +17,12 @@ router.get('/summary/by-product', salesController.getSalesSummaryByProduct);
 // GET /api/sales/summary/monthly - Get monthly sales summary
 router.get('/summary/monthly', salesController.getMonthlySalesSummary);
 
+// GET /api/sales/metrics - Get sales metrics
+router.get('/metrics', salesController.getSalesMetrics);
+
+// GET /api/sales/trending - Get trending products
+router.get('/trending', salesController.getTrendingProducts);
+
 // GET /api/sales/:id - Get sale by ID
 router.get('/:id', salesController.getSaleById);
 
